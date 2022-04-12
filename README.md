@@ -14,7 +14,7 @@ while (1)
 - Step2. Write flash
 - Step3. Verify flash
 ### USAGE
-- Command: bash update_controller.sh
+- Command: **bash update_controller.sh**
 - LogFile: fus_log.txt
 - Input image: 
   - test_img_1: [0xFF, 0x00, 0xFF, 0x00....]
