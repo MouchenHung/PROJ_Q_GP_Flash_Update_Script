@@ -1,4 +1,9 @@
 #!/bin/bash
+PROJ_NAME="Flash Update Stress"
+PROJ_DESCRIPTION="Stress for GT flash via mctp-pldm"
+PROJ_VERSION="1.0.0"
+PROJ_DATE="2022.04.13"
+PROJ_AUTH="Quanta"
 
 LOG_LOOP_TIME=1
 LOG_LOOP_SLEEP=1
@@ -19,17 +24,6 @@ OEM_1S_PEX_FLASH_READ="0xe0 0x72"
 OEM_1S_PEX_FLASH_WRITE="0xe0 0x74"
 OEM_1S_PEX_FLASH_ERASE="0xe0 0x75"
 IANA="0x15 0xa0 0x00"
-
-get_byte_from_hex() {
-	local img_path=$1
-	local byte_idx=$2
-	local img_size=`du -b $img_path |cut -d $'\t' -f 1`
-	if (( $byte_idx -ge $img_size )); then
-		echo "wrong"
-	fi
-	ret=`hd -v -s $byte_idx -n 1 $img_path |head -n 1 |cut -d " " -f 3`
-	echo $ret
-}
 
 c_get_byte_from_hex() {
 	local img_path=$1
@@ -147,7 +141,7 @@ main_task () {
 			hex_offset=`printf '%x\n' $offset`
 			hex_offset_len=${#hex_offset}
 			hex_len=`printf '%x\n' $len`
-			echo "   wr: offset 0x$hex_offset len 0x${hex_len}"
+			echo -ne "   wr: offset 0x$hex_offset len 0x${hex_len}\r"
 			#echo "       data $data"
 
 			# Only support 2 bytes offset
@@ -198,7 +192,7 @@ main_task () {
 			hex_offset=`printf '%x\n' $offset`
 			hex_offset_len=${#hex_offset}
 			hex_len=`printf '%x\n' $len`
-			echo "   rd: offset 0x$hex_offset len 0x${hex_len}"
+			echo -ne "   rd: offset 0x$hex_offset len 0x${hex_len}\r"
 			#echo "       data $data"
 
 			while (( $hex_offset_len != 4 )); do
@@ -214,7 +208,7 @@ main_task () {
 			if (( $? == 1 )); then
 				ending_step $err_flag
 			fi
-			#echo "$ret | cut -d " " -f 17-$((17+MAX_UPDATE_SIZE))"
+
 			rsp_data=`echo $ret | cut -d " " -f 17-$((17+MAX_UPDATE_SIZE)) | sed 's/ //g'`
 			if [ "$rsp_data" != "$data" ]; then
 				echo "<error> Verify failed!"
@@ -235,7 +229,18 @@ main_task () {
 	done
 }
 
+HEADER () {
+	echo "================================================"
+	echo "* Name:        $PROJ_NAME"
+	echo "* Description: $PROJ_DESCRIPTION"
+	echo "* Ver/Date:    $PROJ_VERSION/$PROJ_DATE"
+	echo "* Author:      $PROJ_AUTH"
+	echo "* Note:        none"
+	echo "================================================"
+}
+
 # MAIN FUNCTION HERE
+HEADER
 if (("$#" != 3)); then
 	echo $HELP_WORDS
 	exit 0
@@ -252,9 +257,6 @@ if [ ! -f "$IMAGE_PATH" ]; then
 fi
 
 img_size=`ls -l $IMAGE_PATH | awk '{print $5}'`
-#img_size=`du $IMAGE_PATH |cut -d $'\t' -f 1`
-#img_size=`echo $((img_size * 1024))`
-
 if [ "$img_size" -ne "$IMG_SIZE" ]; then
 	echo "<error> Update image should only with size 4k!"
 	exit 0
